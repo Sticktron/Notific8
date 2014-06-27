@@ -1,0 +1,10 @@
+{
+	entry = {
+		bundle = Notific8Settings;
+		cell = PSLinkCell;
+		detail = "Notific8SettingsController";
+		icon = "Icon.png";
+		isController = 1;
+		label = Notific8;
+	};
+}

@@ -1,0 +1,8 @@
+Package: com.sticktron.notific8
+Name: Notific8
+Depends: mobilesubstrate, firmware (>= 7.0)
+Version: 1.0.0
+Architecture: iphoneos-arm
+Description: An iOS 8 makeover for the Notification Center.
+Author: Sticktron
+Section: Tweaks
