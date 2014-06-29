@@ -11,12 +11,15 @@
 #import "NewAttributionWidget.h"
 
 #define DEBUG_PREFIX @"⭕️⭕️⭕️ [Notific8] "
-//#define DEBUG_MODE_ON
+#define DEBUG_MODE_ON
 #import "DebugLog.h"
 
 
-#define STRIPE_VIEW_TAG		420
-#define HEADER_COLOR		[UIColor colorWithWhite:0 alpha:0.2f]
+#define TINT_VIEW_HEIGHT	36.0f
+#define TINT_VIEW_TAG		420
+#define SEP_VIEW_TAG		911
+#define TINT_COLOR			[UIColor colorWithWhite:0 alpha:0.2f]
+
 
 static NewAttributionWidget *newAttributionWidget;
 
@@ -26,7 +29,7 @@ static NewAttributionWidget *newAttributionWidget;
 // Private Interfaces
 //------------------------------------//
 
-@interface SBNotificationCenterViewController
+@interface SBNotificationCenterViewController : UIViewController
 + (id)_localizableTitleForBulletinViewControllerOfClass:(Class)theClass;
 @end
 
@@ -34,7 +37,15 @@ static NewAttributionWidget *newAttributionWidget;
 - (void)setViewControllers:(id)arg1;
 @end
 
+@interface SBNotificationCenterSeparatorView : UIView
+@end
+
 @interface SBTodayWidgetAndTomorrowSectionHeaderView : UITableViewHeaderFooterView
+{
+    UILabel *_titleLabel;
+    UIImageView *_iconImageView;
+    SBNotificationCenterSeparatorView *_separatorView;
+}
 + (id)defaultFont;
 + (id)defaultBackgroundColor;
 - (void)prepareForReuse;
@@ -59,6 +70,36 @@ static NewAttributionWidget *newAttributionWidget;
 + (id)sharedInstance;
 - (void)reloadAllWidgets;
 @end
+
+@interface SBTodayBulletinCell : UIView
+@property(copy, nonatomic) NSString *labelText;
+@property(nonatomic) struct CGRect textRect;
+- (id)initWithStyle:(long long)arg1 reuseIdentifier:(id)arg2;
+@end
+
+@interface SBNotificationsSectionHeaderView : UIView
+- (id)initWithFrame:(struct CGRect)arg1;
+- (void)_addClearButtons;
+- (id)_circleXImage;
+- (struct CGRect)_clearButtonFrame;
+- (id)_clearImage;
+- (void)_removeClearButtons;
+- (void)_setShowsClear:(_Bool)arg1 animated:(_Bool)arg2;
+- (struct CGRect)_xButtonFrame;
+- (void)buttonAction:(id)arg1;
+- (struct CGRect)contentBounds;
+- (long long)initialGraphicsQuality;
+- (_Bool)isShowingClear;
+- (void)layoutSubviews;
+- (void)prepareForReuse;
+- (void)resetAnimated:(_Bool)arg1;
+- (void)setBackgroundView:(id)arg1;
+- (void)setFloating:(_Bool)arg1;
+- (void)setHasClearButton:(_Bool)arg1;
+//- (void)setTarget:(id)arg1 forClearButtonAction:(CDUnknownBlockType)arg2;
+//- (void)setTarget:(id)arg1 forClearButtonVisibleAction:(CDUnknownBlockType)arg2;
+@end
+
 
 
 
@@ -85,24 +126,24 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
 //
 // Replace the Attribution Widget.
 //
-%hook _SBUIWidgetViewController
-
-- (id)init {
-	DebugLog0;
-	
-	// when the AttributionWeeApp controller is loaded, replace it with a custom controller
-	if ([NSStringFromClass([self class]) isEqualToString:@"AttributionWeeAppController"]) {
-		self = newAttributionWidget;
-		DebugLog(@"Replacing the Attribution Widget with: %@", self);
-		
-	} else {
-		self = %orig;
-	}
-	
-	return self;
-}
-
-%end
+//%hook _SBUIWidgetViewController
+//
+//- (id)init {
+//	DebugLog0;
+//	
+//	// when the AttributionWeeApp controller is loaded, replace it with a custom controller
+//	if ([NSStringFromClass([self class]) isEqualToString:@"AttributionWeeAppController"]) {
+//		self = newAttributionWidget;
+//		DebugLog(@"Replacing the Attribution Widget with: %@", self);
+//		
+//	} else {
+//		self = %orig;
+//	}
+//	
+//	return self;
+//}
+//
+//%end
 
 
 //
@@ -125,11 +166,10 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
 %end
 
 
-//
-// Change the title of the ALL section tab.
-//
 %hook SBNotificationCenterViewController
 
+//
+// Change the title of the ALL section tab.
 + (id)_localizableTitleForBulletinViewControllerOfClass:(Class)theClass {
 	
 	if ([NSStringFromClass(theClass) isEqualToString:@"SBNotificationsAllModeViewController"]) {
@@ -139,42 +179,113 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
 	}
 }
 
+//- (id)_newBulletinObserverViewControllerOfClass:(Class)arg1 {
+//	id result = %orig;
+//	DebugLog(@"Class:%@, result=%@", NSStringFromClass(arg1), result);
+//	return result;
+//}
+
+
+
 %end
+
+//
+// Content for Weather & Tomorrow
+//
+/*
+%hook SBTodayBulletinCell
+- (id)initWithStyle:(long long)arg1 reuseIdentifier:(id)arg2 {
+	DebugLog0;
+	id result = %orig;
+	[result setBackgroundColor:[UIColor colorWithWhite:0 alpha:0.5f]];
+	return result;
+}
+%end
+*/
+
+//
+// Notifications Tab section headers
+//
+/*
+%hook SBNotificationsSectionHeaderView
+- (id)initWithFrame:(struct CGRect)arg1 {
+	DebugLog0;
+	id result = %orig;
+	return result;
+}
+%end
+*/
+
 
 
 //
-// Add a background stripe to the section headers.
+// Today section headers
 //
 %hook SBTodayWidgetAndTomorrowSectionHeaderView
 
-- (id)initWithFrame:(struct CGRect)arg1 {
-	self = %orig;
+- (id)initWithFrame:(CGRect)frame {
+	DebugLog0;
+	//DebugLog(@"frame=%@", NSStringFromCGRect(frame));
 	
-	UIView *stripe = [[UIView alloc] initWithFrame:self.bounds];
-	stripe.backgroundColor = HEADER_COLOR;
-	stripe.layer.compositingFilter = @"plusD";
-	stripe.tag = STRIPE_VIEW_TAG;
-	[self insertSubview:stripe atIndex:0];
+	SBTodayWidgetAndTomorrowSectionHeaderView *view = %orig;
 	
-	return self;
+	
+	// add tint view...
+	
+	CGRect tframe = CGRectMake(0, 0, view.bounds.size.width, TINT_VIEW_HEIGHT);
+	UIView *tintView = [[UIView alloc] initWithFrame:tframe];
+	tintView.layer.compositingFilter = @"plusD";
+	tintView.backgroundColor = TINT_COLOR;
+	tintView.tag = TINT_VIEW_TAG;
+	
+	[view insertSubview:tintView atIndex:0];
+	
+	return view;
 }
 
 - (void)layoutSubviews {
 	%orig;
 	
-	float height = 36.0f;
-	CGRect frame = CGRectMake(self.bounds.origin.x, 70.0f - height - 1.0f, self.bounds.size.width, height);
-	[[self viewWithTag:STRIPE_VIEW_TAG] setFrame:frame];
+	UIView *tintView = [self viewWithTag:TINT_VIEW_TAG];
 	
-	for (id subview in [self.subviews[1] subviews]) {
-		if ([subview isKindOfClass:%c(SBNotificationCenterSeparatorView)]) {
-			[subview setHidden:YES];
-			break;
-		}
+	if (tintView) {
+		// set tintView's to 0 index again
+		[self sendSubviewToBack:tintView];
+		
+		// set y co-ord
+		CGRect frame = self.bounds;
+		frame.origin.y = self.bounds.size.height - TINT_VIEW_HEIGHT - 1.0f;
+		frame.size.height = TINT_VIEW_HEIGHT;
+		[tintView setFrame:frame];
+	}
+	
+	
+	// hide separator...
+	
+	SBNotificationCenterSeparatorView *separator = MSHookIvar<id>(self, "_separatorView");
+	DebugLog(@"hooked separator: %@", separator);
+	
+	if (separator) {
+		separator.hidden = YES;
 	}
 }
 
 %end
+
+
+
+@interface SBBulletinObserverSectionHeaderView : UITableViewHeaderFooterView
+- (void)setBackgroundView:(id)arg1;
+@end
+
+%hook SBBulletinObserverSectionHeaderView
+- (void)setBackgroundView:(id)arg1 {
+//	DebugLog(@"bg view=%@", arg1);
+	[arg1 setBackgroundColor:UIColor.redColor];
+	%orig;
+}
+%end
+
 
 
 
