@@ -124,26 +124,26 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
 
 
 //
-// Replace the Attribution Widget.
+// Replace the Attribution Widget controller
 //
-//%hook _SBUIWidgetViewController
-//
-//- (id)init {
-//	DebugLog0;
-//	
-//	// when the AttributionWeeApp controller is loaded, replace it with a custom controller
-//	if ([NSStringFromClass([self class]) isEqualToString:@"AttributionWeeAppController"]) {
-//		self = newAttributionWidget;
-//		DebugLog(@"Replacing the Attribution Widget with: %@", self);
-//		
-//	} else {
-//		self = %orig;
-//	}
-//	
-//	return self;
-//}
-//
-//%end
+%hook _SBUIWidgetViewController
+
+- (id)init {
+	DebugLog0;
+	
+	// when the AttributionWeeApp controller is loaded, replace it with a custom controller
+	if ([NSStringFromClass([self class]) isEqualToString:@"AttributionWeeAppController"]) {
+		self = newAttributionWidget;
+		DebugLog(@"Replacing the Attribution Widget with: %@", self);
+		
+	} else {
+		self = %orig;
+	}
+	
+	return self;
+}
+
+%end
 
 
 //
@@ -166,10 +166,11 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
 %end
 
 
+//
+// Change the title of the ALL section tab
+//
 %hook SBNotificationCenterViewController
 
-//
-// Change the title of the ALL section tab.
 + (id)_localizableTitleForBulletinViewControllerOfClass:(Class)theClass {
 	
 	if ([NSStringFromClass(theClass) isEqualToString:@"SBNotificationsAllModeViewController"]) {
@@ -179,47 +180,11 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
 	}
 }
 
-//- (id)_newBulletinObserverViewControllerOfClass:(Class)arg1 {
-//	id result = %orig;
-//	DebugLog(@"Class:%@, result=%@", NSStringFromClass(arg1), result);
-//	return result;
-//}
-
-
-
 %end
 
-//
-// Content for Weather & Tomorrow
-//
-/*
-%hook SBTodayBulletinCell
-- (id)initWithStyle:(long long)arg1 reuseIdentifier:(id)arg2 {
-	DebugLog0;
-	id result = %orig;
-	[result setBackgroundColor:[UIColor colorWithWhite:0 alpha:0.5f]];
-	return result;
-}
-%end
-*/
 
 //
-// Notifications Tab section headers
-//
-/*
-%hook SBNotificationsSectionHeaderView
-- (id)initWithFrame:(struct CGRect)arg1 {
-	DebugLog0;
-	id result = %orig;
-	return result;
-}
-%end
-*/
-
-
-
-//
-// Today section headers
+// Modify Section Headers
 //
 %hook SBTodayWidgetAndTomorrowSectionHeaderView
 
@@ -227,10 +192,9 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
 	DebugLog0;
 	//DebugLog(@"frame=%@", NSStringFromCGRect(frame));
 	
+	// create the tint view...
+	
 	SBTodayWidgetAndTomorrowSectionHeaderView *view = %orig;
-	
-	
-	// add tint view...
 	
 	CGRect tframe = CGRectMake(0, 0, view.bounds.size.width, TINT_VIEW_HEIGHT);
 	UIView *tintView = [[UIView alloc] initWithFrame:tframe];
@@ -240,16 +204,17 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
 	
 	[view insertSubview:tintView atIndex:0];
 	
+	
 	return view;
 }
 
 - (void)layoutSubviews {
 	%orig;
 	
-	UIView *tintView = [self viewWithTag:TINT_VIEW_TAG];
+	// set tintView's index to 0 again...
 	
+	UIView *tintView = [self viewWithTag:TINT_VIEW_TAG];
 	if (tintView) {
-		// set tintView's to 0 index again
 		[self sendSubviewToBack:tintView];
 		
 		// set y co-ord
