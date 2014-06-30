@@ -6,22 +6,19 @@
 //
 //
 
-#import "NewAttributionWidget.h"
-
-#define DEBUG_PREFIX @"⭕️⭕️⭕️ [Notific8] "
-//#define DEBUG_MODE_ON
+#define DEBUG_PREFIX @"🔶 [Notific8] "
 #import "DebugLog.h"
+
+#import "NewAttributionWidget.h"
 
 
 #define BUTTON_BG_COLOR			[UIColor colorWithWhite:0.55f alpha:1.0f]
-
 #define BUTTON_COLOR			[UIColor colorWithWhite:1.0f alpha:0.2f]
 #define BUTTON_COLOR_ON			[UIColor colorWithWhite:0 alpha:0.2f]
-
 #define TEXT_COLOR				[UIColor colorWithWhite:0.52f alpha:1.0f]
-
 #define HEADER_FILTER			@"plusD"
 #define CONTENT_FILTER			@"colorDodgeBlendMode"
+#define YAHOO_IMAGE_PATH		@"/Library/PreferenceBundles/Notific8Settings.bundle/Yahoo!@2x.png"
 
 
 static float kWidgetTopMargin = 32.5f;
@@ -35,10 +32,14 @@ static float kButtonHeight = 28.0f;
 
 static float kAttributionViewHeight = 60.0f;
 
+NSString* MyLocalizedString(NSString *string);
 
-//------------------------------------//
+
+
+
+//----------------------------------------//
 // Private Interfaces
-//------------------------------------//
+//----------------------------------------//
 
 @interface SpringBoard
 - (BOOL)isLocked;
@@ -59,9 +60,10 @@ static float kAttributionViewHeight = 60.0f;
 
 
 
-//------------------------------------//
+
+//----------------------------------------//
 // Custom Attribution Widget
-//------------------------------------//
+//----------------------------------------//
 
 @implementation NewAttributionWidget
 
@@ -105,7 +107,6 @@ static float kAttributionViewHeight = 60.0f;
 	view.clipsToBounds = YES;
 	view.autoresizesSubviews = NO;
 	view.backgroundColor = UIColor.clearColor;
-	//view.backgroundColor = [UIColor colorWithRed:0 green:1 blue:0 alpha:0.2f];
 	
 	float x = (view.bounds.size.width - kButtonWidth) / 2.0f;
 	
@@ -139,7 +140,7 @@ static float kAttributionViewHeight = 60.0f;
 	btn.layer.borderWidth = 0;
 	btn.layer.cornerRadius = 5.0f;
 	
-	[btn setTitle:@"Edit" forState:UIControlStateNormal];
+	[btn setTitle:MyLocalizedString(@"Edit") forState:UIControlStateNormal];
 	[btn setTitleColor:UIColor.blackColor forState:UIControlStateNormal];
 	btn.titleLabel.font = [UIFont systemFontOfSize:14.0f];
 	
@@ -193,7 +194,7 @@ static float kAttributionViewHeight = 60.0f;
 	
 	// ... Yahoo logo ...
 	
-	NSString *yahooLogoPath = @"/Library/PreferenceBundles/Notific8Settings.bundle/Yahoo!@2x.png";
+	NSString *yahooLogoPath = YAHOO_IMAGE_PATH;
 	UIImage *yahooImage = [UIImage imageWithContentsOfFile:yahooLogoPath];
 	yahooImage = [yahooImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
 	
