@@ -4,6 +4,9 @@
 //
 //
 
+#define DEBUG_PREFIX @"🔵 [Notific8Settings] "
+#import "../DebugLog.h"
+
 #import "Headers/Preferences/PSListController.h"
 #import "Headers/Preferences/PSSpecifier.h"
 #import "Headers/Preferences/PSTableCell.h"
@@ -16,22 +19,53 @@
 #define EMAIL_STICKTRON				@"mailto:sticktron@hotmail.com"
 #define TWITTER_WEB_STICKTRON		@"http://twitter.com/sticktron"
 #define TWITTER_APP_STICKTRON		@"twitter://user?screen_name=sticktron"
-//#define URL_GITHUB			@"http://github.com/Sticktron"
+//#define URL_GITHUB				@"http://github.com/Sticktron"
 
 #define LOGO_PATH				@"/Library/PreferenceBundles/Notific8Settings.bundle/Logo.png"
 #define ICON_PATH				@"/Library/PreferenceBundles/Notific8Settings.bundle/Icon.png"
 
 
+@class Notific8SettingsController;
+static Notific8SettingsController *controller = nil;
 
-//------------------------------------//
+
+
+
+//----------------------------------------//
+// handle respring notification
+//----------------------------------------//
+
+static void respringNotification(CFNotificationCenterRef center, void *observer, CFStringRef name,
+								 const void *object, CFDictionaryRef userInfo) {
+	
+	DebugLog1(@"******** Respring notification  ********");
+	
+	if (controller) {
+		UIAlertView *alert = [[UIAlertView alloc]
+							  initWithTitle:@"Respring Required"
+							  message:@"Would you like to respring now?"
+							  delegate:controller
+							  cancelButtonTitle:@"NO"
+							  otherButtonTitles:@"YES", nil];
+		[alert show];
+	}
+}
+
+
+
+
+//----------------------------------------//
 // LogoCell Class
-//------------------------------------//
+//----------------------------------------//
+
 
 @interface LogoCell : PSTableCell
 @property (nonatomic, strong) UIImageView *logoView;
 @end
 
-//------------------------------------//
+
+//----------------------------------------//
+
 
 @implementation LogoCell
 
@@ -60,33 +94,51 @@
 
 
 
-//------------------------------------//
+
+
+//----------------------------------------//
 // Settings Controller
-//------------------------------------//
+//----------------------------------------//
+
 
 @interface Notific8SettingsController : PSListController
 - (id)initForContentSize:(CGSize)size;
-- (void)respring;
 - (void)openEmailForCole;
 - (void)openEmailForSticktron;
 - (void)openTwitterForSticktron;
 - (void)openTwitterForCole;
+- (void)openTwitterForCole;
+- (void)respring;
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex;
 @end
 
-//------------------------------------//
+
+//----------------------------------------//
+
 
 @implementation Notific8SettingsController
 
 - (id)initForContentSize:(CGSize)size {
-	self = [super initForContentSize:size];
+	DebugLog0;
 	
+	controller = [super initForContentSize:size];
+	
+	// add a Respring button to the navbar
 	UIBarButtonItem *respringButton = [[UIBarButtonItem alloc] initWithTitle:@"Respring"
 																	   style:UIBarButtonItemStyleDone
 																	  target:self
 																	  action:@selector(respring)];
 	[self.navigationItem setRightBarButtonItem:respringButton];
 	
-	return self;
+	// handle notification from Enabled switch
+	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
+									NULL,
+									(CFNotificationCallback)respringNotification,
+									CFSTR("com.sticktron.notific8.settings-changed-respring"),
+									NULL,
+									CFNotificationSuspensionBehaviorDeliverImmediately);
+
+	return controller;
 }
 
 - (id)specifiers {
@@ -130,12 +182,16 @@
 	}
 }
 
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
+    if (buttonIndex == 1) {
+		[self respring];
+    }
+}
+
 - (void)respring {
 	NSLog(@"Notific8 called for a respring.");
 	system("killall -HUP SpringBoard");
 }
 
 @end
-
-
 
