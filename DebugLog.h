@@ -5,11 +5,11 @@
 //  Sticktron 2014
 //
 
-#ifdef DEBUG_MODE_ON
+#ifdef DEBUG
 
 	/* default log prefix */
 	#ifndef DEBUG_PREFIX
-		#define DEBUG_PREFIX @"[[ DebugLog ]]"
+		#define DEBUG_PREFIX @"[DebugLog] "
 	#endif
 
 	/* prints class::selector >> message */
