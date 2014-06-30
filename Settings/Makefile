@@ -1,9 +1,6 @@
 ARCHS = armv7 armv7s arm64
 TARGET = iphone:clang:latest:7.0
-
 THEOS_BUILD_DIR = Packages
-
-include theos/makefiles/common.mk
 
 BUNDLE_NAME = Notific8Settings
 Notific8Settings_CFLAGS = -fobjc-arc
@@ -12,6 +9,7 @@ Notific8Settings_INSTALL_PATH = /Library/PreferenceBundles
 Notific8Settings_FRAMEWORKS = Foundation UIKit
 Notific8Settings_PRIVATE_FRAMEWORKS = Preferences
 
+include theos/makefiles/common.mk
 include $(THEOS_MAKE_PATH)/bundle.mk
 
 internal-stage::
