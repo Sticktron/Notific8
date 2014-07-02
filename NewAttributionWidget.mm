@@ -6,33 +6,78 @@
 //
 //
 
+#import "NewAttributionWidget.h"
+
 #define DEBUG_PREFIX @"🔶 [Notific8] "
 #import "DebugLog.h"
 
-#import "NewAttributionWidget.h"
 
-
-#define BUTTON_BG_COLOR			[UIColor colorWithWhite:0.55f alpha:1.0f]
+#define BUTTON_BG_COLOR		[UIColor colorWithWhite:0.55f alpha:1.0f]
 #define BUTTON_COLOR			[UIColor colorWithWhite:1.0f alpha:0.2f]
-#define BUTTON_COLOR_ON			[UIColor colorWithWhite:0 alpha:0.2f]
+#define BUTTON_COLOR_ON		[UIColor colorWithWhite:0 alpha:0.2f]
 #define TEXT_COLOR				[UIColor colorWithWhite:0.52f alpha:1.0f]
+
 #define HEADER_FILTER			@"plusD"
-#define CONTENT_FILTER			@"colorDodgeBlendMode"
+#define CONTENT_FILTER		@"colorDodgeBlendMode"
 #define YAHOO_IMAGE_PATH		@"/Library/PreferenceBundles/Notific8Settings.bundle/Yahoo!@2x.png"
 
 
-static float kWidgetTopMargin = 32.5f;
-static float kWidgetBottomMargin = 10.0f;
+/*
 
-static float kButtonTopMargin = 27.5f;
-static float kButtonBottomMargin = 18.0f;
+layouts:
 
-static float kButtonWidth = 223.0f;
-static float kButtonHeight = 28.0f;
+(full)
+–––––––––––––––––––––––––––
+MARGIN		32.5	a*
+–––––––––	line
+MARGIN		27.5	b*
+[EDIT]		28		c
+MARGIN		18		d
+[ATTRIB]	60		e
+MARGIN		10		f*
+–––––––––––––––––––––––––––
 
-static float kAttributionViewHeight = 60.0f;
 
-NSString* MyLocalizedString(NSString *string);
+
+(no button)
+–––––––––––––––––––––––––––
+MARGIN		32.5	a
+–––––––––	line
+MARGIN		27.5	b
+[EDIT]		-		- c
+MARGIN		-		- d
+[ATTRIB]	60		e
+MARGIN		10		f
+–––––––––––––––––––––––––––
+ 
+
+
+(no attrib)
+–––––––––––––––––––––––––––
+MARGIN		32.5	a
+–––––––––	line
+MARGIN		27.5	b
+[EDIT]		28		c
+MARGIN				- d
+[ATTRIB]			- e
+MARGIN		10		f
+–––––––––––––––––––––––––––
+
+*/
+
+
+#define MARGIN_TOP							32.5f
+#define SPACE_AFTER_LINE					27.5f
+#define BUTTON_SIZE						(CGSize){223, 28}
+#define SPACE_BETWEEN_BUTTON_AND_TEXT	18.0f
+#define TEXT_HEIGHT						60.0f
+#define MARGIN_BOTTOM						10.0f
+
+#define is_iPad							(UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+
+
+extern NSString* MyLocalizedString(NSString *string);
+
 
 
 
@@ -41,22 +86,27 @@ NSString* MyLocalizedString(NSString *string);
 // Private Interfaces
 //----------------------------------------//
 
+
 @interface SpringBoard
 - (BOOL)isLocked;
 @end
+
 
 @interface SBNotificationCenterSeparatorView : UIView
 - (id)initWithFrame:(CGRect)frame mode:(long long)mode;
 @end
 
+
 //@protocol SBWidgetViewControllerHostDelegate <NSObject>
 //@optional
 //- (void)widget:(id)arg1 didUpdatePreferredSize:(struct CGSize)arg2;
 //@end
-//
+
+
 //@interface SBNotificationCenterController : NSObject <SBWidgetViewControllerHostDelegate>
 //+ (id)sharedInstance;
 //@end
+
 
 
 
@@ -75,29 +125,30 @@ NSString* MyLocalizedString(NSString *string);
 }
 
 - (CGSize)preferredViewSize {
-	float height;
-	float maxHeight = kWidgetTopMargin + kButtonTopMargin + kButtonHeight + kButtonBottomMargin + kAttributionViewHeight + kWidgetBottomMargin;
-//	
-//	// calculate height based on visible subviews...
-//	
-//	if (!self.button) {	// no view yet; use max height
-		height =  maxHeight;
-//		
-//	} else {
-//		if (self.button.hidden && self.attributionView.hidden) { // both hidden
-//			height = kWidgetTopMargin + kWidgetBottomMargin;
-//			
-//		} else if (self.button.hidden) { // only button hidden
-//			height = kWidgetTopMargin + kButtonTopMargin + kAttributionViewHeight + kWidgetBottomMargin;
-//			
-//		} else if (self.attributionView.hidden) { // only attribution view hidden
-//			height = kWidgetTopMargin + kButtonTopMargin + kButtonHeight + kButtonBottomMargin;
-//		} else {
-//			height = maxHeight;
-//		}
+	// adjust height based on subview visibility
+	
+	float width = is_iPad ? 580.0f : UIScreen.mainScreen.bounds.size.width;
+	float height = 0;
+	
+	height = MARGIN_TOP + SPACE_AFTER_LINE;
+	
+//	// only attrib view is hidden...
+//	if (self.button.hidden == NO && self.attributionView.hidden == YES) {
+//		return (CGSize){width, height += (BUTTON_SIZE.height + MARGIN_BOTTOM)};
 //	}
 //	
-	return CGSizeMake([[UIScreen mainScreen] bounds].size.width, height);
+//	// only button is hidden...
+//	if (self.button.hidden == YES && self.attributionView.hidden == NO) {
+//		return (CGSize){width, height += (TEXT_HEIGHT + MARGIN_BOTTOM)};
+//	}
+	
+	if (self.button.hidden == NO && self.attributionView.hidden == NO) {
+		// both are showing...
+		return (CGSize){width, height += (BUTTON_SIZE.height + SPACE_BETWEEN_BUTTON_AND_TEXT + TEXT_HEIGHT + MARGIN_BOTTOM)};
+	} else {
+		// both are hidden...
+		return (CGSize){width, 0};
+	}
 }
 
 - (void)loadView {
@@ -108,21 +159,26 @@ NSString* MyLocalizedString(NSString *string);
 	view.autoresizesSubviews = NO;
 	view.backgroundColor = UIColor.clearColor;
 	
-	float x = (view.bounds.size.width - kButtonWidth) / 2.0f;
+	float x = (view.bounds.size.width - BUTTON_SIZE.width) / 2.0f;
+	float y = 	MARGIN_TOP;
+
 	
 	
 	// separator line ...
 	
-	CGRect sepFrame = CGRectMake(0, kWidgetTopMargin, self.preferredViewSize.width, 0.5f);
+	CGRect sepFrame = (CGRect){{0, y}, {self.preferredViewSize.width, 0.5f}};
 	Class $SBNotificationCenterSeparatorView = NSClassFromString(@"SBNotificationCenterSeparatorView");
-	SBNotificationCenterSeparatorView *sepView = [[$SBNotificationCenterSeparatorView alloc]
-												  initWithFrame:sepFrame mode:0];
-	[view addSubview:sepView];
+	SBNotificationCenterSeparatorView *sepView = [[$SBNotificationCenterSeparatorView alloc] initWithFrame:sepFrame mode:0];
+	
+	self.separatorView = sepView;
+	[view addSubview:self.separatorView];
+	
 	
 	
 	// edit button & backing view ...
 	
-	CGRect buttonFrame = CGRectMake(x, kWidgetTopMargin + kButtonTopMargin, kButtonWidth, kButtonHeight);
+	y += SPACE_AFTER_LINE;
+	CGRect buttonFrame = (CGRect){{x, y}, BUTTON_SIZE};
 	
 	UIView *bg = [[UIView alloc] initWithFrame:buttonFrame];
 	bg.backgroundColor = BUTTON_BG_COLOR;
@@ -153,59 +209,41 @@ NSString* MyLocalizedString(NSString *string);
 	[view addSubview:self.button];
 	
 	
-	// attribution stuff ...
 	
-	CGRect attFrame;
-	attFrame.origin = (CGPoint){x, self.button.frame.origin.y + kButtonHeight + kButtonBottomMargin};
-	attFrame.size = (CGSize){self.button.frame.size.width, kAttributionViewHeight};
+	// attribution text ...
+	
+	y += BUTTON_SIZE.height + SPACE_BETWEEN_BUTTON_AND_TEXT;
+	CGRect attFrame = (CGRect){{x, y}, {BUTTON_SIZE.width, TEXT_HEIGHT}};
 	
 	UIView *attributionView = [[UIView alloc] initWithFrame:attFrame];
 	attributionView.layer.compositingFilter = CONTENT_FILTER;
-//	attributionView.backgroundColor = UIColor.blueColor;
 	
 	self.attributionView = attributionView;
 	[view addSubview:self.attributionView];
 	
 	
-	// ... weather ...
+	UILabel *label = [[UILabel alloc] initWithFrame:CGRectZero];
+	label.font = [UIFont systemFontOfSize:13.0f];
+	label.textAlignment = NSTextAlignmentLeft;
+	label.textColor = TEXT_COLOR;
+	label.text = @"Weather and stock information provided by";
+	[label sizeToFit];
 	
-	UILabel *weatherLabel = [[UILabel alloc] initWithFrame:CGRectZero];
-	weatherLabel.font = [UIFont systemFontOfSize:12.0f];
-	weatherLabel.textAlignment = NSTextAlignmentLeft;
-	weatherLabel.numberOfLines = 0;
-	weatherLabel.textColor = TEXT_COLOR;
-	weatherLabel.text = [NSString stringWithFormat:@"%@\n%@", @"Weather information provided by", @"The Weather Channel, LLC."];
-	[weatherLabel sizeToFit];
-	
-	[self.attributionView addSubview:weatherLabel];
+	[self.attributionView addSubview:label];
 	
 	
-	// ... stocks ...
 	
-	UILabel *stocksLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 33.0f, 0, 0)];
-	stocksLabel.font = [UIFont systemFontOfSize:12.0f];
-	stocksLabel.textAlignment = NSTextAlignmentLeft;
-	stocksLabel.textColor = TEXT_COLOR;
-	stocksLabel.text = @"Stock information provided by";
-	[stocksLabel sizeToFit];
-	
-	[self.attributionView addSubview:stocksLabel];
-	
-	
-	// ... Yahoo logo ...
+	// Yahoo logo ...
 	
 	NSString *yahooLogoPath = YAHOO_IMAGE_PATH;
 	UIImage *yahooImage = [UIImage imageWithContentsOfFile:yahooLogoPath];
 	yahooImage = [yahooImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
 	
 	UIImageView *yahooImageView = [[UIImageView alloc] initWithImage:yahooImage];
-	CGRect yFrame = yahooImageView.frame;
-	yFrame.origin.x = stocksLabel.frame.size.width + 2.0f;
-	yFrame.origin.y = stocksLabel.frame.origin.y + 1.0f;
-	yahooImageView.frame = yFrame;
+	yahooImageView.frame = (CGRect){{0, label.frame.size.height}, yahooImageView.frame.size};
 	yahooImageView.tintColor = TEXT_COLOR;
 	//	yahooImageView.layer.compositingFilter = kTextFilter;
-	DebugLog(@"yahoo logo: %@", yahooImageView);
+	//DebugLog(@"yahoo logo: %@", yahooImageView);
 	
 	[self.attributionView addSubview:yahooImageView];
 	
@@ -230,12 +268,21 @@ NSString* MyLocalizedString(NSString *string);
 	
 	[self hideButtonIfLocked];
 	
+	// hide the separator if button isn't showing
+	if (self.attributionView.hidden && self.button.hidden) {
+		DebugLog(@"Should hide separator");
+		self.separatorView.hidden = YES;
+	} else {
+		DebugLog(@"Should NOT hide separator");
+		self.separatorView.hidden = NO;
+	}
 	
+
 	
-	// >>>>> need to update Widget Height
-	
-//	DebugLog(@"self.widgetHost=%@", self.widgetHost);
+// >>>>> need to update Widget Height
 //	
+//	DebugLog(@"self.widgetHost=%@", self.widgetHost);
+//
 //	Class $SBNotificationCenterController = NSClassFromString(@"SBNotificationCenterController");
 //	SBNotificationCenterController *ncc = [$SBNotificationCenterController sharedInstance];
 //	DebugLog(@"NC controller = %@", ncc);
@@ -248,8 +295,8 @@ NSString* MyLocalizedString(NSString *string);
 //	[self __requestPreferredViewSizeWithReplyHandler:nil];
 
 	
-	//DebugLog(@"widgetHost.delegate=%@", [self.widgetHost delegate]);
-	//[[[self widgetHost] delegate] widget:[self widgetHost] didUpdatePreferredSize:[self preferredViewSize]];
+//  DebugLog(@"widgetHost.delegate=%@", [self.widgetHost delegate]);
+//  [[[self widgetHost] delegate] widget:[self widgetHost] didUpdatePreferredSize:[self preferredViewSize]];
 	
 	
 	[super hostWillPresent];
@@ -264,8 +311,10 @@ NSString* MyLocalizedString(NSString *string);
 	NSDictionary *settings = [NSDictionary dictionaryWithContentsOfFile:path];
 	
 	if (settings) {
-		// apply Hide Text setting
+		
 		if (self.attributionView) {
+			
+			// apply Hide Text setting
 			self.attributionView.hidden = [settings[@"HideText"] boolValue];
 			
 			// TODO >>>>> widget height needs update
@@ -301,7 +350,7 @@ NSString* MyLocalizedString(NSString *string);
 		self.attributionView.frame = frame;
 	} else {
 		CGRect frame = self.attributionView.frame;
-		frame.origin.y = self.button.frame.origin.y + kButtonHeight + kButtonBottomMargin;
+		frame.origin.y = self.button.frame.origin.y + BUTTON_SIZE.height + SPACE_BETWEEN_BUTTON_AND_TEXT;
 		self.attributionView.frame = frame;
 	}
 	

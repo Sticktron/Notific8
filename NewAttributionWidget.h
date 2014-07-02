@@ -10,11 +10,13 @@
 #import <UIKit/UIKit.h>
 #import "Headers/SpringBoardUIServices/_SBUIWidgetViewController.h"
 
+@class SBNotificationCenterSeparatorView;
 
 @interface NewAttributionWidget : _SBUIWidgetViewController
 @property (nonatomic, strong) UIButton *button;
 @property (nonatomic, strong) UIView *buttonBGView;
 @property (nonatomic, strong) UIView *attributionView;
+@property (nonatomic, strong) SBNotificationCenterSeparatorView *separatorView;
 
 - (void)applySettings;
 - (void)hideButtonIfLocked;

@@ -28,7 +28,6 @@
 			<key>PostNotification</key>
 			<string>com.sticktron.notific8.settings-changed-respring</string>
 		</dict>
-		
 		<dict>
 			<key>cell</key>
 			<string>PSGroupCell</string>
@@ -59,11 +58,10 @@
 			<key>label</key>
 			<string>Always show Clear buttons</string>
 			<key>default</key>
-			<false/>
+			<true/>
 			<key>PostNotification</key>
 			<string>com.sticktron.notific8.settings-changed</string>
 		</dict>
-		
 		<dict>
 			<key>cell</key>
 			<string>PSGroupCell</string>

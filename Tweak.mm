@@ -6,79 +6,77 @@
 //
 //
 
-#define DEBUG_PREFIX @"🔴 [Notific8] "
-#import "DebugLog.h"
-
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import "NewAttributionWidget.h"
 #import "Headers/SpringBoardUIServices/_SBUIWidgetViewController.h"
 
-
-#define iPad					(UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
-
-#define TINT_VIEW_HEIGHT		36.0f
-#define TINT_COLOR				[UIColor colorWithWhite:0 alpha:0.2f]
-#define TINT_VIEW_TAG			420
-
-#define SEP_VIEW_TAG			911
-
-#define SETTINGS_PLIST_PATH		[NSHomeDirectory() stringByAppendingPathComponent:@"Library/Preferences/com.sticktron.notific8.plist"]
-#define LOCALIZATIONS_PATH		@"/Library/Application Support/Notific8/Localizations/"
-
-
-static NewAttributionWidget *newAttributionWidget = nil;
-static NSBundle *bundle = nil;
+#define DEBUG_PREFIX @"🔴 [Notific8] "
+#import "DebugLog.h"
 
 
 
-
-//----------------------------------------//
 // Private Interfaces
 //----------------------------------------//
 
 @interface SBNotificationCenterViewController : UIViewController
 + (id)_localizableTitleForBulletinViewControllerOfClass:(Class)theClass;
+- (id)_allModeViewControllerCreateIfNecessary:(_Bool)arg1;
 @end
 
-@interface SBModeViewController
+
+@interface SBNotificationCenterController : NSObject
+@property(readonly, nonatomic) SBNotificationCenterViewController *viewController; // @synthesize viewController=_viewController;
++ (id)sharedInstance;
+@end
+
+
+@interface SBModeViewController : UIViewController
 - (void)setViewControllers:(id)arg1;
 @end
+
 
 @interface SBNotificationCenterSeparatorView : UIView
 @end
 
-@interface SBTodayWidgetAndTomorrowSectionHeaderView : UITableViewHeaderFooterView
-{
-    UILabel *_titleLabel;
-    UIImageView *_iconImageView;
-    SBNotificationCenterSeparatorView *_separatorView;
-}
-+ (id)defaultFont;
-+ (id)defaultBackgroundColor;
-- (void)prepareForReuse;
-- (void)layoutSubviews;
-- (void)dealloc;
-- (id)initWithFrame:(struct CGRect)arg1;
+
+@interface SBBulletinViewController : UIViewController
+- (id)tableView:(id)arg1 viewForHeaderInSection:(long long)arg2;
 @end
 
-/*
-//@interface SBNotificationsAllModeViewController
-//- (void)_setHeaderViewCurrentlyInClearState:(id)arg1;
-//- (id)_headerViewCurrentlyInClearState;
-//- (void)viewWillDisappear:(_Bool)arg1;
-//- (void)viewDidAppear:(_Bool)arg1;
-//@end
+
+@interface SBTodayWidgetAndTomorrowSectionHeaderView : UITableViewHeaderFooterView
+{
+//    UILabel *_titleLabel;
+//    UIImageView *_iconImageView;
+    SBNotificationCenterSeparatorView *_separatorView;
+}
+//+ (id)defaultFont;
+//+ (id)defaultBackgroundColor;
+- (id)initWithFrame:(struct CGRect)arg1;
+//- (void)prepareForReuse;
+//- (void)layoutSubviews;
+@end
+
+
+@interface SBNotificationsAllModeViewController : SBModeViewController
+@property (readonly, nonatomic) NSArray *orderedSectionIDs;
+- (void)_setHeaderViewCurrentlyInClearState:(id)arg1;
+- (void)invalidateContentLayout;
+@end
+
 
 //@protocol SBWidgetViewControllerHostDelegate <NSObject>
 //@optional
 //- (void)widget:(id)arg1 didUpdatePreferredSize:(struct CGSize)arg2;
 //@end
 
+
 //@interface SBNotificationCenterController : NSObject <SBWidgetViewControllerHostDelegate>
 //+ (id)sharedInstance;
 //- (void)reloadAllWidgets;
 //@end
+
 
 //@interface SBTodayBulletinCell : UIView
 //@property(copy, nonatomic) NSString *labelText;
@@ -86,19 +84,20 @@ static NSBundle *bundle = nil;
 //- (id)initWithStyle:(long long)arg1 reuseIdentifier:(id)arg2;
 //@end
 
-//@interface SBNotificationsSectionHeaderView : UIView
+
+@interface SBNotificationsSectionHeaderView : UIView
 //- (id)initWithFrame:(struct CGRect)arg1;
 //- (void)_addClearButtons;
 //- (id)_circleXImage;
 //- (struct CGRect)_clearButtonFrame;
 //- (id)_clearImage;
 //- (void)_removeClearButtons;
-//- (void)_setShowsClear:(_Bool)arg1 animated:(_Bool)arg2;
+- (void)_setShowsClear:(_Bool)arg1 animated:(_Bool)arg2;
 //- (struct CGRect)_xButtonFrame;
 //- (void)buttonAction:(id)arg1;
 //- (struct CGRect)contentBounds;
 //- (long long)initialGraphicsQuality;
-//- (_Bool)isShowingClear;
+- (_Bool)isShowingClear;
 //- (void)layoutSubviews;
 //- (void)prepareForReuse;
 //- (void)resetAnimated:(_Bool)arg1;
@@ -107,57 +106,97 @@ static NSBundle *bundle = nil;
 //- (void)setHasClearButton:(_Bool)arg1;
 //- (void)setTarget:(id)arg1 forClearButtonAction:(CDUnknownBlockType)arg2;
 //- (void)setTarget:(id)arg1 forClearButtonVisibleAction:(CDUnknownBlockType)arg2;
-//@end
-
-*/
+@end
 
 
 
+#define iPad						(UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
 
-//----------------------------------------//
-// Localization
-//----------------------------------------//
+#define TINT_VIEW_HEIGHT			36.0f
+#define TINT_COLOR				[UIColor colorWithWhite:0 alpha:0.2f]
+#define TINT_VIEW_TAG			420
 
+#define SEP_VIEW_TAG				911
+
+#define LOCALIZATIONS_PATH		@"/Library/Application Support/Notific8/Localizations/"
+
+static NewAttributionWidget *newAttributionWidget;
+static NSBundle *bundle;
+static BOOL isDisabled = NO;
+static BOOL alwaysShowClear = YES;
+
+
+
+// Substitutes strings with localized versions
 NSString* MyLocalizedString(NSString *string) {
 	if (!bundle) {
 		bundle = [NSBundle bundleWithPath:LOCALIZATIONS_PATH];
 	}
 	
 	NSString *result = [bundle localizedStringForKey:string value:string table:nil];
-	DebugLog1(@"translating:%@ >>> %@", string, result);
+	NSLog(@"[Notific8] translating:%@ >>> %@", string, result);
 	
 	return result;
 }
 
 
+// Loads user preferences
+static void loadSettings() {
+	NSString *path = [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Preferences/com.sticktron.notific8.plist"];
+	NSDictionary *settings = [NSDictionary dictionaryWithContentsOfFile:path];
+	
+	isDisabled = (settings[@"Enabled"] && ([settings[@"Enabled"] boolValue] == NO));
+	alwaysShowClear = (settings[@"AlwaysShowClear"] && [settings[@"AlwaysShowClear"] boolValue] == NO) ? NO:YES;
+	
+	NSLog(@"[Notific8] settings are now......");
+	NSLog(@"[Notific8] isDisabled=%@", isDisabled ? @"yes":@"no");
+	NSLog(@"[Notific8] alwaysShowClear=%@", alwaysShowClear ? @"yes":@"no");
+}
 
 
-//----------------------------------------//
-// Notifications from Settings
-//----------------------------------------//
-
+// Called when settings are changed
 static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStringRef name,
 						 const void *object, CFDictionaryRef userInfo) {
-	DebugLog1(@"******** Settings Changed Notification ********");
+	DebugLogC(@"******** Settings Changed Notification ********");
 	
+	loadSettings();
+	
+	// update our attribution widget
 	if (newAttributionWidget) {
 		[newAttributionWidget applySettings];
 	}
+	
+	// force the Clear buttons to be updated by invalidating the view controller's layout
+	Class $SBNotificationCenterController = NSClassFromString(@"SBNotificationCenterController");
+	SBNotificationCenterController *cc = [$SBNotificationCenterController sharedInstance];
+	
+	if (cc && cc.viewController) {
+		id amvc = [cc.viewController _allModeViewControllerCreateIfNecessary:NO];
+		DebugLogC(@"AllModeViewController=%@", amvc);
+		
+		if ([amvc respondsToSelector:@selector(invalidateContentLayout)]) {
+			DebugLogC(@"invalidating layout, Clear buttons should update.");
+			[amvc invalidateContentLayout];
+			DebugLogC(@">>> invalidated.");
+		} else {
+			DebugLogC(@"does not respond to invalidate");
+		}
+	}
+	
+//	for (id sectionID in amvc.orderedSectionIDs) {
+//		//
+//	}
+		 
 }
 
 
 
-
-//----------------------------------------//
 // Hooks
 //----------------------------------------//
 
 
-//
 // Replace the Attribution Widget controller
-//
 %hook _SBUIWidgetViewController
-
 - (id)init {
 	DebugLog0;
 	
@@ -172,19 +211,16 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
 	
 	return self;
 }
-
 %end
 
 
-//
 // Hide the MISSED section tab.
-//
 %hook SBModeViewController
-
 - (void)setViewControllers:(id)controllers {
 	NSMutableArray *newControllers = [[NSMutableArray alloc] init];
 	
 	for (id vc in controllers) {
+//		DebugLog(@"controller=%@", [vc class]);
 		if (![vc isKindOfClass:[%c(SBNotificationsMissedModeViewController) class]]) {
 			[newControllers addObject:vc];
 		}
@@ -192,15 +228,11 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
 	
 	%orig(newControllers);
 }
-
 %end
 
 
-//
 // Change the title of the ALL section tab
-//
 %hook SBNotificationCenterViewController
-
 + (id)_localizableTitleForBulletinViewControllerOfClass:(Class)theClass {
 	
 	if ([NSStringFromClass(theClass) isEqualToString:@"SBNotificationsAllModeViewController"]) {
@@ -209,15 +241,11 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
 		return %orig;
 	}
 }
-
 %end
 
 
-//
 // Modify Section Headers
-//
 %hook SBTodayWidgetAndTomorrowSectionHeaderView
-
 - (id)initWithFrame:(CGRect)frame {
 	DebugLog0;
 	//DebugLog(@"frame=%@", NSStringFromCGRect(frame));
@@ -237,7 +265,6 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
 	
 	return view;
 }
-
 - (void)layoutSubviews {
 	%orig;
 	
@@ -264,21 +291,32 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
 		separator.hidden = YES;
 	}
 }
+%end
+
+
+// Always show the Clear buttons
+%hook SBNotificationsSectionHeaderView
+- (void)_setShowsClear:(_Bool)arg1 animated:(_Bool)arg2 {
+	DebugLog0;
+	
+	if (alwaysShowClear) {
+		return %orig(YES, NO);
+	} else {
+		return %orig;
+	}
+}
 
 %end
 
 
 
-
-//----------------------------------------//
 // Constructor
-//----------------------------------------//
-
 %ctor {
 	@autoreleasepool {
-		NSDictionary *settings = [NSDictionary dictionaryWithContentsOfFile:SETTINGS_PLIST_PATH];
 		
-		if (settings && settings[@"Enabled"] && ([settings[@"Enabled"] boolValue] == NO)) {
+		loadSettings();
+		
+		if (isDisabled) {
 			NSLog(@" Notific8 is disabled.");
 			
 		} else {
@@ -292,10 +330,13 @@ static void prefsChanged(CFNotificationCenterRef center, void *observer, CFStrin
 											(CFNotificationCallback)prefsChanged,
 											CFSTR("com.sticktron.notific8.settings-changed"),
 											NULL,
-											CFNotificationSuspensionBehaviorDeliverImmediately);
+											CFNotificationSuspensionBehaviorDeliverImmediately
+			);
 			
-			%init; // ok go!
+			%init;
 		}
 	}
 }
+
+
 

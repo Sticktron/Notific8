@@ -38,7 +38,7 @@ static Notific8SettingsController *controller = nil;
 static void respringNotification(CFNotificationCenterRef center, void *observer, CFStringRef name,
 								 const void *object, CFDictionaryRef userInfo) {
 	
-	DebugLog1(@"******** Respring notification  ********");
+	DebugLogC(@"******** Respring notification  ********");
 	
 	if (controller) {
 		UIAlertView *alert = [[UIAlertView alloc]
@@ -128,6 +128,8 @@ static void respringNotification(CFNotificationCenterRef center, void *observer,
 																	   style:UIBarButtonItemStyleDone
 																	  target:self
 																	  action:@selector(respring)];
+	
+	respringButton.tintColor = [UIColor colorWithRed:0.639 green:0.412 blue:0.831 alpha:1]; /*#a369d4*/
 	[self.navigationItem setRightBarButtonItem:respringButton];
 	
 	// handle notification from Enabled switch
