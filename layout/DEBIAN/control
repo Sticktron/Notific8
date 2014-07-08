@@ -6,4 +6,5 @@ Section: Addons(NotificationCenter)
 Depends: firmware (>= 7.0), mobilesubstrate, preferenceloader
 Architecture: iphoneos-arm
 Author: Sticktron
+Homepage: http://www.sticktron.com
 Icon: file:///Library/PreferenceBundles/Notific8Settings.bundle/Icon@2x.png
